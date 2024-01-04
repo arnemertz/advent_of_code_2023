@@ -9,6 +9,7 @@
 #include <queue>
 #include <ranges>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 class city_map {
@@ -46,7 +47,7 @@ private:
     std::vector<row> grid;
 };
 
-enum class direction {
+enum class direction : int8_t {
     NORTH,
     SOUTH,
     EAST,
@@ -108,6 +109,7 @@ struct prio_queue {
         const auto new_pos = find_pos(weight);
         const auto old_pos = std::find_if(new_pos, elements.rend(), [&t](const element &e) { return e.t == t; });
         old_pos->weight = weight;
+
         std::rotate(new_pos, old_pos, old_pos + 1);
     }
 
@@ -128,21 +130,14 @@ struct heat_loss_algorithm_dijkstra : heat_loss_algorithm {
         unsigned count;
 
         constexpr auto operator<=>(const step_history&) const = default;
-        [[nodiscard]] constexpr unsigned to_index() const {
-            return ((count - 1) << 2u) | static_cast<unsigned>(dir);
-        }
-
-        [[nodiscard]] static constexpr step_history from_index(unsigned idx) {
-            return step_history{static_cast<direction>(idx & 3u), (idx >> 2u) + 1};
-        }
 
         static constexpr unsigned max_count = 3;
-        static constexpr auto max_index = ((max_count - 1) << 2u) | 3;
     };
 
     struct node {
         position pos;
         step_history history;
+
         constexpr auto operator<=>(const node&) const = default;
     };
 
@@ -214,16 +209,17 @@ struct heat_loss_algorithm_dijkstra : heat_loss_algorithm {
         nodes.resize(0);
 
         const auto last_dir = n.history.dir;
-        for (auto dir: {direction::NORTH, direction::SOUTH, direction::WEST, direction::EAST}) {
-            if (dir == opposite(last_dir)) continue;
+        for (auto new_dir: {direction::NORTH, direction::SOUTH, direction::WEST, direction::EAST}) {
+            if (new_dir == opposite(last_dir)) continue;
 
-            step_history new_history{dir, 1};
-            if (dir == last_dir) {
+            step_history new_history{new_dir, 1};
+            if (new_dir == last_dir) {
                 if (n.history.count == 3) continue;
                 else new_history.count += n.history.count;
             }
 
-            const auto new_position = neighbor_pos(n.pos, dir);
+            const auto new_position = neighbor_pos(n.pos, new_dir);
+
             if (new_position.has_value()) {
                 const auto neighbor = node{new_position.value(), new_history};
                 if (!visited[neighbor]) {
@@ -235,6 +231,8 @@ struct heat_loss_algorithm_dijkstra : heat_loss_algorithm {
     }
 
     void run_dijkstra() {
+        const auto start_time = std::chrono::steady_clock::now();
+
         while (!queue.empty()) {
             const auto [current_weight, current_node] = queue.top();
 
@@ -249,9 +247,12 @@ struct heat_loss_algorithm_dijkstra : heat_loss_algorithm {
             queue.pop();
             visited[current_node] = true;
         }
+
+        std::cerr << std::format("run time: {}", std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - start_time));
     }
 
-    auto get_minimal_heat_loss() const {
+    [[nodiscard]] auto get_minimal_heat_loss() const {
         position end = {map.width()-1, map.height()-1};
 
         unsigned minimal_heat_loss = maximal_heat_loss;
@@ -265,11 +266,9 @@ struct heat_loss_algorithm_dijkstra : heat_loss_algorithm {
 };
 
 inline unsigned minimal_heat_loss(const city_map &map) {
-    const auto start_time = std::chrono::steady_clock::now();
     heat_loss_algorithm_dijkstra algorithm{map};
     algorithm.run_dijkstra();
-    std::cerr << std::format("run time: {}", std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::steady_clock::now() - start_time));
+
     return algorithm.get_minimal_heat_loss();
 }
 
