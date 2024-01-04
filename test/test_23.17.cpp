@@ -76,7 +76,6 @@ TEST_CASE("example case") {
     CHECK(map.width() == 13);
     CHECK(map.height() == 13);
 
-//    REQUIRE(minimal_heat_loss(map) == 102);
-    REQUIRE(minimal_heat_loss_dijkstra(map) == 102);
+    REQUIRE(minimal_heat_loss(map) == 102);
 }
 

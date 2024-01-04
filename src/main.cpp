@@ -20,6 +20,6 @@ int main() {
     }
     std::cout << std::format("Width = {}, height = {}", map.width(), map.height());
 
-    std::cout << std::format("minimal heat loss: {}", minimal_heat_loss_dijkstra(map));
+    std::cout << std::format("minimal heat loss: {}", minimal_heat_loss(map));
 }
 
