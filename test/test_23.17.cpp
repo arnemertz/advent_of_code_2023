@@ -11,7 +11,7 @@ TEST_CASE("city_map") {
 }
 
 TEST_CASE("prio_queue") {
-    prio_queue<char, unsigned> queue;
+    prio_queue<char> queue;
     queue.add('A', 1);
     queue.add('B', 2);
     queue.add('C', 4);

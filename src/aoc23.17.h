@@ -79,8 +79,9 @@ struct heat_loss_algorithm {
     city_map map;
 };
 
-template<typename T, typename Weight>
+template<typename T>
 struct prio_queue {
+    using Weight = unsigned;
     struct element {
         Weight weight;
         T t;
@@ -141,7 +142,7 @@ struct heat_loss_algorithm_dijkstra : heat_loss_algorithm {
         constexpr auto operator<=>(const node&) const = default;
     };
 
-    prio_queue<node, unsigned> queue;
+    prio_queue<node> queue;
     std::map<node, unsigned> heat_loss;
     std::map<node, bool> visited;
 
